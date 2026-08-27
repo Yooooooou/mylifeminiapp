@@ -8,14 +8,16 @@ const ToastContext = createContext(() => {});
 export function ToastProvider({ children }) {
   const [toast, setToast] = useState(null);
 
-  const show = useCallback((message, tone = 'success') => {
-    setToast({ message, tone, key: Date.now() });
+  // `undo` turns a saved record into something reversible, which is why the
+  // add flows no longer ask "are you sure?" before writing.
+  const show = useCallback((message, tone = 'success', undo = null) => {
+    setToast({ message, tone, undo, key: Date.now() });
     if (tone === 'success') notifySuccess();
   }, []);
 
   useEffect(() => {
     if (!toast) return undefined;
-    const timer = setTimeout(() => setToast(null), 2200);
+    const timer = setTimeout(() => setToast(null), toast.undo ? 5000 : 2200);
     return () => clearTimeout(timer);
   }, [toast]);
 
@@ -27,7 +29,7 @@ export function ToastProvider({ children }) {
       {toast ? (
         <div
           role="status"
-          className="pointer-events-none fixed inset-x-0 bottom-6 z-50 flex justify-center px-4"
+          className="fixed inset-x-0 bottom-24 z-50 flex justify-center px-4"
         >
           <div
             className={`rounded-full px-4 py-2.5 text-sm font-medium shadow-lg ${
@@ -36,8 +38,19 @@ export function ToastProvider({ children }) {
                 : 'bg-accent text-accent-text'
             }`}
           >
-            {toast.tone === 'success' ? '✓ ' : ''}
             {toast.message}
+            {toast.undo ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setToast(null);
+                  toast.undo();
+                }}
+                className="ml-3 font-semibold underline underline-offset-2"
+              >
+                Отменить
+              </button>
+            ) : null}
           </div>
         </div>
       ) : null}

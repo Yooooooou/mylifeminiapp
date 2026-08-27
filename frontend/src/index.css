@@ -15,6 +15,25 @@
     --tg-accent-text: #ffffff;
     --tg-border: #e4e4e7;
     --tg-danger: #e0483c;
+
+    /* Semantic colours. Deliberately fixed rather than derived from
+       themeParams: Telegram sends a brand accent, not a meaning scale, and
+       "overdue" has to read as overdue whatever accent the client sends. */
+    --sem-success: #1B8F5A;
+    --sem-warning: #A2701A;
+    --sem-danger: #C7453A;
+    --sem-info: #2F71C9;
+    --sem-stage: #6D53B8;
+    --elevated: rgba(16, 20, 28, 0.05);
+  }
+
+  .dark {
+    --sem-success: #38C793;
+    --sem-warning: #E9B34F;
+    --sem-danger: #ED6A6A;
+    --sem-info: #5A9FE6;
+    --sem-stage: #A088E8;
+    --elevated: rgba(255, 255, 255, 0.06);
   }
 
   html {

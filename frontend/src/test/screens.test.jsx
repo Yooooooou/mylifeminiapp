@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { api } from '../lib/api';
 import { ToastProvider } from '../components/Toast';
-import { Dashboard } from '../screens/Dashboard';
+import { Today } from '../screens/Today';
 import { Habits } from '../screens/Habits';
 import { Weight } from '../screens/Weight';
 
@@ -61,46 +61,79 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-describe('Dashboard', () => {
+describe('Сегодня', () => {
   it('shows a skeleton before the data arrives, never a blank screen', () => {
     api.dashboard.mockReturnValue(new Promise(() => {}));
-    const { container } = renderAt('/', <Dashboard />);
+    const { container } = renderAt('/', <Today />);
     expect(container.querySelectorAll('.animate-pulse').length).toBeGreaterThan(0);
   });
 
-  it('renders every headline metric', async () => {
+  it('leads with the check-in as a task while today is unfilled', async () => {
     api.dashboard.mockResolvedValue(DASHBOARD);
-    renderAt('/', <Dashboard />);
+    renderAt('/', <Today />);
 
-    await screen.findByText('Долг сейчас');
-    expect(metricCard('Долг сейчас')).toHaveTextContent(/220\u00a0?\s?000/);
-    expect(within(metricCard('Вес сейчас')).getByText('83,2 кг')).toBeInTheDocument();
-    expect(within(metricCard('Отклик → оффер')).getByText('25%')).toBeInTheDocument();
-    expect(within(metricCard('Чек-ины подряд')).getByText('3 дня')).toBeInTheDocument();
-    expect(metricCard('Остаток за неделю')).toHaveTextContent(/50\u00a0?\s?000/);
+    expect(await screen.findByText('Главное на сегодня')).toBeInTheDocument();
+    expect(screen.getByText('Пройти дневной чек-ин')).toBeInTheDocument();
   });
 
-  it('flags that today has no check-in yet', async () => {
-    api.dashboard.mockResolvedValue(DASHBOARD);
-    renderAt('/', <Dashboard />);
-    expect(await screen.findByText('сегодня ещё нет')).toBeInTheDocument();
+  it('shrinks the task to a confirmation once today is complete', async () => {
+    api.dashboard.mockResolvedValue({
+      ...DASHBOARD,
+      habits_today: {
+        id: 9, date: '2025-09-09', meditation: true, workout: true,
+        work_done: true, mood: 4, complete: true,
+      },
+    });
+    renderAt('/', <Today />);
+
+    expect(await screen.findByText('Чек-ин за сегодня заполнен')).toBeInTheDocument();
+    expect(screen.queryByText('Пройти дневной чек-ин')).not.toBeInTheDocument();
   });
 
-  it('lists the recent changes', async () => {
+  it('names what the debt bar measures instead of showing a bare ratio', async () => {
     api.dashboard.mockResolvedValue(DASHBOARD);
-    renderAt('/', <Dashboard />);
+    renderAt('/', <Today />);
+
+    // 420 000 initial − 220 000 remaining = 200 000 repaid, 48%.
+    const repaid = await screen.findByText(/Погашено/);
+    expect(repaid).toHaveTextContent(/200\u00a0?\s?000/);
+    expect(repaid).toHaveTextContent('48%');
+  });
+
+  it('hides the conversion rate until the sample can support it', async () => {
+    api.dashboard.mockResolvedValue(DASHBOARD);
+    renderAt('/', <Today />);
+
+    // Four applications is not a conversion rate; 25% would read as a verdict.
+    await screen.findByText('Карьера');
+    expect(screen.queryByText('25%')).not.toBeInTheDocument();
+    expect(screen.getByText('3 активных')).toBeInTheDocument();
+  });
+
+  it('shows the conversion once there are enough applications', async () => {
+    api.dashboard.mockResolvedValue({
+      ...DASHBOARD,
+      funnel: { applications: 12, interviews: 5, offers: 3, rejections: 4, conversion: 25 },
+    });
+    renderAt('/', <Today />);
+    expect(await screen.findByText('25%')).toBeInTheDocument();
+  });
+
+  it('groups recent events under the day they happened', async () => {
+    api.dashboard.mockResolvedValue(DASHBOARD);
+    renderAt('/', <Today />);
     expect(await screen.findByText('Kaspi')).toBeInTheDocument();
   });
 
   it('offers a retry when loading fails', async () => {
     api.dashboard.mockRejectedValue(new Error('Google Sheets недоступен'));
-    renderAt('/', <Dashboard />);
+    renderAt('/', <Today />);
 
     expect(await screen.findByText('Google Sheets недоступен')).toBeInTheDocument();
 
     api.dashboard.mockResolvedValue(DASHBOARD);
     await userEvent.click(screen.getByText('Повторить'));
-    expect(await screen.findByText('Долг сейчас')).toBeInTheDocument();
+    expect(await screen.findByText('Главное на сегодня')).toBeInTheDocument();
   });
 });
 

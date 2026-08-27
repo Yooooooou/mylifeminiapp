@@ -6,7 +6,7 @@ import { useAsync } from '../lib/useAsync';
 import { confirmAction, haptic } from '../lib/telegram';
 import { Screen } from '../components/Screen';
 import { ErrorState, Skeleton } from '../components/ui';
-import { HistoryFeed } from '../components/HistoryFeed';
+import { ActivityFeed } from '../components/ActivityFeed';
 import { useToast } from '../components/Toast';
 
 const FILTERS = [
@@ -80,7 +80,7 @@ export function History() {
       ) : error ? (
         <ErrorState message={error} onRetry={reload} />
       ) : (
-        <HistoryFeed items={data} onSelect={open} empty="За этот фильтр записей нет." />
+        <ActivityFeed items={data} onSelect={open} empty="За этот фильтр записей нет." />
       )}
 
       {selected ? (

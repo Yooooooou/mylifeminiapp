@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { api } from '../lib/api';
-import { todayIso } from '../lib/format';
+import { money, todayIso } from '../lib/format';
 import { Screen } from '../components/Screen';
 import { Button, Field, NumberInput, Select, TextInput } from '../components/ui';
 import { useToast } from '../components/Toast';
@@ -31,7 +31,9 @@ export function Income() {
     setSaving(true);
     try {
       await api.addIncome({ amount: parsed, source, date });
-      toast('Доход записан');
+      // No undo here: income lands in a weekly total that may already hold
+      // other entries, so removing it would mean subtracting, not deleting.
+      toast(`Доход ${money(parsed)} записан`);
       navigate('/');
     } catch (error) {
       toast(error.message, 'error');

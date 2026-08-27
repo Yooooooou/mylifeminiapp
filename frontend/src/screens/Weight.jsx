@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { api } from '../lib/api';
-import { todayIso } from '../lib/format';
+import { kg, todayIso } from '../lib/format';
 import { Screen } from '../components/Screen';
 import { Button, Field, NumberInput, TextInput } from '../components/ui';
 import { useToast } from '../components/Toast';
@@ -29,8 +29,10 @@ export function Weight() {
 
     setSaving(true);
     try {
-      await api.addWeight({ weight: parsed, note: note || null, date });
-      toast('Вес записан');
+      const created = await api.addWeight({ weight: parsed, note: note || null, date });
+      toast(`Вес ${kg(parsed)} записан`, 'success', () =>
+        api.deleteWeight(created.id).catch(() => {}),
+      );
       navigate('/');
     } catch (error) {
       toast(error.message, 'error');
