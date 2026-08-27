@@ -13,6 +13,7 @@ from datetime import date
 
 from aiogram import Bot, Dispatcher, F
 from aiogram.client.default import DefaultBotProperties
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.filters import Command, CommandStart
 from aiogram.types import (
     InlineKeyboardButton,
@@ -123,11 +124,17 @@ async def main() -> None:
         format="%(asctime)s %(levelname)s %(name)s %(message)s",
     )
 
-    await bot.set_chat_menu_button(
-        menu_button=MenuButtonWebApp(
-            text="Трекер", web_app=WebAppInfo(url=settings.webapp_url)
+    # The menu button is a convenience: /start still offers the same WebApp
+    # button inline. Losing it is not worth taking the API down with the bot,
+    # so log the reason and carry on.
+    try:
+        await bot.set_chat_menu_button(
+            menu_button=MenuButtonWebApp(
+                text="Трекер", web_app=WebAppInfo(url=settings.webapp_url)
+            )
         )
-    )
+    except TelegramBadRequest as exc:
+        logger.error("Could not set the menu button: %s", exc)
 
     scheduler: AsyncIOScheduler | None = None
     if settings.reminder_enabled:

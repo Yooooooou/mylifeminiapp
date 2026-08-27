@@ -38,7 +38,15 @@ class Settings:
         self.spreadsheet_id: str = _require("SPREADSHEET_ID")
 
         # Public https URL of the Mini App, used for the bot's WebApp button.
-        self.webapp_url: str = _require("WEBAPP_URL")
+        # Telegram rejects a WebApp URL that is not https, and it does so deep
+        # inside a bot API call at startup, so check it here where the message
+        # can name the variable and the fix.
+        self.webapp_url: str = _require("WEBAPP_URL").rstrip("/")
+        if not self.webapp_url.startswith("https://"):
+            raise ConfigError(
+                f"WEBAPP_URL must start with https:// (got {self.webapp_url!r}). "
+                "Telegram only accepts https links for a Mini App."
+            )
 
         # Seconds an initData payload stays acceptable. Telegram recommends
         # rejecting stale payloads to limit replay of a leaked initData string.
