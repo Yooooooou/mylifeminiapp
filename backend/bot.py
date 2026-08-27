@@ -20,6 +20,7 @@ from aiogram.types import (
     InlineKeyboardMarkup,
     Message,
     MenuButtonWebApp,
+    ReplyKeyboardRemove,
     WebAppInfo,
 )
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -47,6 +48,25 @@ def _inline_webapp(text: str = "Открыть трекер", path: str = "") ->
     )
 
 
+async def _drop_stale_keyboard(message: Message) -> None:
+    """Take down the persistent reply keyboard earlier versions installed.
+
+    That keyboard carried a web_app button, and Telegram does not sign initData
+    for one — the Mini App opened and then failed every request. Dropping the
+    sending code did not retract the keyboard already pinned in the chat:
+    is_persistent keeps it there until something explicitly removes it, so it
+    outlived the fix and kept being the obvious button to press.
+
+    A reply keyboard can only be removed by a message that carries the removal,
+    hence the throwaway that is deleted immediately.
+    """
+    try:
+        notice = await message.answer("…", reply_markup=ReplyKeyboardRemove())
+        await notice.delete()
+    except TelegramBadRequest as exc:
+        logger.warning("Could not clear the old reply keyboard: %s", exc)
+
+
 def _is_owner(message: Message) -> bool:
     return bool(message.from_user and message.from_user.id == settings.allowed_telegram_id)
 
@@ -57,6 +77,7 @@ async def on_start(message: Message) -> None:
         await message.answer("Это личный трекер.")
         return
 
+    await _drop_stale_keyboard(message)
     await message.answer(
         "<b>Life Tracker</b>\n\n"
         "Финансы, тело, работа и привычки — в одном экране.\n"
@@ -79,6 +100,7 @@ async def on_checkin(message: Message) -> None:
 async def on_any(message: Message) -> None:
     if not _is_owner(message):
         return
+    await _drop_stale_keyboard(message)
     await message.answer(
         "Всё происходит в трекере — открывай его кнопкой ниже.",
         reply_markup=_inline_webapp("📊 Открыть трекер"),
