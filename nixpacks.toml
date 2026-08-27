@@ -1,4 +1,9 @@
 # Railway build: compile the Mini App bundle, then run the API + bot together.
+#
+# Every Python call uses the venv interpreter by absolute path. Nix's system
+# python has no writable site-packages, so the deps live in /opt/venv and a
+# bare `python` would not see them. Do not add a Procfile: Nixpacks prefers it
+# over this [start] block, which silently reintroduces that bug.
 
 [phases.setup]
 nixPkgs = ["python311", "nodejs_20"]
