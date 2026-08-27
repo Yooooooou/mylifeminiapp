@@ -41,7 +41,13 @@ async function request(path, { method = 'GET', body } = {}) {
 
   if (!response.ok) {
     if (response.status === 403) {
-      throw new ApiError('Доступ только для владельца трекера.', 403);
+      // The backend distinguishes a wrong account from a bad signature, and
+      // names the caller's Telegram id in the first case. Swallowing that
+      // detail left the screen saying "denied" with no way to tell which.
+      throw new ApiError(
+        detailOf(payload) ?? 'Доступ только для владельца трекера.',
+        403,
+      );
     }
     throw new ApiError(detailOf(payload) ?? 'Не удалось выполнить запрос.', response.status);
   }

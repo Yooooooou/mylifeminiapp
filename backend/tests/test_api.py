@@ -35,7 +35,10 @@ def test_api_rejects_another_telegram_user(client):
         "/api/dashboard", headers={"X-Telegram-Init-Data": make_init_data(user_id=777)}
     )
     assert response.status_code == 403
-    assert "private" in response.json()["detail"].lower()
+    # The message has to carry the caller's own id: that number is what
+    # ALLOWED_TELEGRAM_ID should have been set to, and without it a denied
+    # screen says nothing about how to fix the configuration.
+    assert "777" in response.json()["detail"]
 
 
 def test_api_accepts_the_authorization_header_form(client):

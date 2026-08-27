@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import logging
 import time
 from dataclasses import dataclass
 from urllib.parse import parse_qsl
@@ -17,6 +18,8 @@ from urllib.parse import parse_qsl
 from fastapi import Header, HTTPException, status
 
 from .config import get_settings
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -120,14 +123,26 @@ async def require_user(
             max_age=settings.init_data_max_age,
         )
     except InitDataError as exc:
+        # Logged because the two 403 causes need different fixes: a signature
+        # mismatch means BOT_TOKEN belongs to another bot, while everything
+        # else points at the client.
+        logger.warning("Rejected initData: %s", exc)
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)
         ) from exc
 
     if user.id != settings.allowed_telegram_id:
+        # The signature was valid, so this really is the Telegram id of whoever
+        # opened the app. Naming both numbers turns "access denied" into the
+        # value ALLOWED_TELEGRAM_ID should have been set to.
+        logger.warning(
+            "Rejected user %s (ALLOWED_TELEGRAM_ID is %s)",
+            user.id,
+            settings.allowed_telegram_id,
+        )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="This tracker is private.",
+            detail=f"Доступ только для владельца трекера. Твой Telegram ID: {user.id}",
         )
 
     return user
