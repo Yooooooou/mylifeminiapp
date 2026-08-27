@@ -13,7 +13,7 @@ import { Income } from './screens/Income';
 import { Weight } from './screens/Weight';
 import { Habits } from './screens/Habits';
 import { JobForm } from './screens/Jobs';
-import { Debts } from './screens/Debts';
+import { Debts, NewDebt } from './screens/Debts';
 import { History } from './screens/History';
 
 /**
@@ -57,8 +57,10 @@ export default function App() {
           <Route path="/habits" element={<Habits />} />
           <Route path="/jobs/new" element={<JobForm />} />
           <Route path="/jobs/:id" element={<JobForm />} />
-          <Route path="/debts" element={<Debts />} />
-          <Route path="/debts/new" element={<Debts />} />
+          {/* The literal path is declared first and with its own component:
+              "/debts/new" matches this route, not "/debts/:id", so reading the
+              id to tell them apart never worked. */}
+          <Route path="/debts/new" element={<NewDebt />} />
           <Route path="/debts/:id" element={<Debts />} />
           <Route path="/history" element={<History />} />
 

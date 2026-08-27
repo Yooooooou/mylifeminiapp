@@ -33,6 +33,12 @@ const num = (text) => {
   return Number.isFinite(parsed) ? parsed : null;
 };
 
+/** Route component for /debts/new. */
+export function NewDebt() {
+  const navigate = useNavigate();
+  return <DebtForm onDone={() => navigate('/money')} />;
+}
+
 export function Debts() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -43,8 +49,6 @@ export function Debts() {
     () => (data && id ? data.find((item) => String(item.id) === id) : null),
     [data, id],
   );
-
-  if (id === 'new') return <DebtForm onDone={() => navigate('/money')} />;
 
   if (loading) {
     return (
