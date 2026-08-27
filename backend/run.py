@@ -10,6 +10,13 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import sys
+
+# Make the interpreter's working directory irrelevant: `app.main` and `bot`
+# import the same whether this is started as `python run.py` from backend/ or
+# as `python backend/run.py` from the repo root. Without it the entrypoint
+# only worked behind a `cd`, which not every runner can express.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import uvicorn
 
