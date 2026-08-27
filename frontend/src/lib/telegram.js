@@ -55,6 +55,33 @@ function resolveInitData() {
 
 const signature = resolveInitData();
 
+/**
+ * Why the signature is missing, in the words of what was actually checked.
+ * "initData is empty" named the symptom and left three very different causes
+ * indistinguishable from a screenshot.
+ */
+export function initDataDiagnosis() {
+  if (signature) return null;
+  if (typeof window === 'undefined') return 'нет окна браузера';
+
+  const sdk = Boolean(window.Telegram?.WebApp);
+  const fragment = window.location.hash.includes('tgWebApp');
+  let stored = false;
+  try {
+    stored = Boolean(window.sessionStorage.getItem(STORAGE_KEY));
+  } catch {
+    stored = false;
+  }
+
+  if (!sdk && !fragment) {
+    return 'Telegram не передал параметры запуска. Открой трекер кнопкой в боте, а не по ссылке.';
+  }
+  if (sdk && !fragment && !stored) {
+    return 'SDK загрузился, но подпись пустая — приложение открыто вне чата с ботом.';
+  }
+  return `SDK: ${sdk ? 'есть' : 'нет'}, параметры в ссылке: ${fragment ? 'есть' : 'нет'}, копия: ${stored ? 'есть' : 'нет'}`;
+}
+
 if (signature && typeof window !== 'undefined') {
   try {
     window.sessionStorage.setItem(STORAGE_KEY, signature);

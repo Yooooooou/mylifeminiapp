@@ -3,9 +3,15 @@
  * refuses anything else, so there is no other auth path to maintain.
  */
 
-import { initData } from './telegram';
+import { initData, initDataDiagnosis } from './telegram';
 
 const BASE = import.meta.env.VITE_API_BASE ?? '';
+
+/** Fail before the round trip when there is nothing to authenticate with. */
+function assertSigned() {
+  if (initData()) return;
+  throw new ApiError(initDataDiagnosis() ?? 'Нет подписи Telegram.', 401);
+}
 
 export class ApiError extends Error {
   constructor(message, status) {

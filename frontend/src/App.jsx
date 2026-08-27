@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
-import { HashRouter, Route, Routes, useLocation } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 
 import { initTelegram } from './lib/telegram';
+import { initialRoute } from './lib/route';
 import { TabBar } from './components/TabBar';
 import { ToastProvider } from './components/Toast';
 import { Today } from './screens/Today';
@@ -43,7 +44,7 @@ export default function App() {
 
   return (
     <ToastProvider>
-      <HashRouter>
+      <MemoryRouter initialEntries={[initialRoute()]}>
         <ScrollToTop />
         <Routes>
           <Route path="/" element={<Today />} />
@@ -64,7 +65,7 @@ export default function App() {
           <Route path="*" element={<Today />} />
         </Routes>
         <Chrome />
-      </HashRouter>
+      </MemoryRouter>
     </ToastProvider>
   );
 }
