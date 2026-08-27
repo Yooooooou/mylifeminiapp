@@ -33,8 +33,9 @@ afterEach(() => {
 });
 
 describe('HomeScreenPrompt', () => {
-  it('stays hidden where the client cannot install an icon', async () => {
-    // iOS answers this way; a browser has no methods at all.
+  it('points at the client menu where it cannot install the icon itself', async () => {
+    // iOS answers this way, but its ⋯ menu still carries the option, so the
+    // row explains where to find it rather than disappearing.
     const { HomeScreenPrompt } = await mountWith({
       ...base,
       addToHomeScreen() {},
@@ -42,7 +43,8 @@ describe('HomeScreenPrompt', () => {
     });
 
     render(<HomeScreenPrompt />);
-    await waitFor(() => expect(screen.queryByText('Добавить')).not.toBeInTheDocument());
+    expect(await screen.findByText(/Меню ⋯/)).toBeInTheDocument();
+    expect(screen.queryByText('Добавить')).not.toBeInTheDocument();
   });
 
   it('stays hidden once the icon is already there', async () => {
@@ -78,13 +80,18 @@ describe('HomeScreenPrompt', () => {
 
     const first = render(<HomeScreenPrompt />);
     await userEvent.click(await screen.findByLabelText('Скрыть предложение'));
+
+    // It has to go away on the spot, not only on the next mount — asserting
+    // just the reopen let a throwing handler pass, since the dismissal was
+    // already stored by then.
+    await waitFor(() => expect(screen.queryByText('Добавить')).not.toBeInTheDocument());
     first.unmount();
 
     render(<HomeScreenPrompt />);
     await waitFor(() => expect(screen.queryByText('Добавить')).not.toBeInTheDocument());
   });
 
-  it('stays hidden in a plain browser', async () => {
+  it('never offers a button a plain browser cannot honour', async () => {
     const { HomeScreenPrompt } = await mountWith(null);
     render(<HomeScreenPrompt />);
     await waitFor(() => expect(screen.queryByText('Добавить')).not.toBeInTheDocument());

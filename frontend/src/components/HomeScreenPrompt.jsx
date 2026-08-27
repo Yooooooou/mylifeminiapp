@@ -21,26 +21,28 @@ function dismissed() {
 }
 
 export function HomeScreenPrompt() {
-  const [show, setShow] = useState(false);
+  const [state, setState] = useState(null);
 
   useEffect(() => {
     let alive = true;
     if (dismissed()) return undefined;
 
     homeScreenStatus().then((status) => {
-      // 'unsupported' covers the clients that cannot do this at all, iOS among
-      // them; 'added' means the icon is already there.
-      if (alive) setShow(status === 'missing');
+      if (!alive || status === 'added') return;
+      // A client that cannot install the icon from here often still offers it
+      // in the ⋯ menu of the Mini App header. Saying so beats showing nothing,
+      // which reads as the feature being absent.
+      setState(status === 'missing' ? 'offer' : 'manual');
     });
 
-    const off = onHomeScreenAdded(() => setShow(false));
+    const off = onHomeScreenAdded(() => setState(null));
     return () => {
       alive = false;
       off();
     };
   }, []);
 
-  if (!show) return null;
+  if (!state) return null;
 
   function hide() {
     try {
@@ -48,7 +50,7 @@ export function HomeScreenPrompt() {
     } catch {
       /* remembering is a courtesy, not a requirement */
     }
-    setShow(false);
+    setState(null);
   }
 
   return (
@@ -58,15 +60,21 @@ export function HomeScreenPrompt() {
       </span>
       <div className="min-w-0 flex-1">
         <p className="text-body text-text">Иконка на главный экран</p>
-        <p className="mt-0.5 text-secondary text-hint">Открывать трекер одним касанием</p>
+        <p className="mt-0.5 text-secondary text-hint">
+          {state === 'offer'
+            ? 'Открывать трекер одним касанием'
+            : 'Меню ⋯ вверху справа → «На главный экран»'}
+        </p>
       </div>
-      <button
-        type="button"
-        onClick={addToHomeScreen}
-        className="shrink-0 rounded-full bg-elevated px-3.5 py-2 text-secondary font-semibold text-link"
-      >
-        Добавить
-      </button>
+      {state === 'offer' ? (
+        <button
+          type="button"
+          onClick={addToHomeScreen}
+          className="shrink-0 rounded-full bg-elevated px-3.5 py-2 text-secondary font-semibold text-link"
+        >
+          Добавить
+        </button>
+      ) : null}
       <button
         type="button"
         onClick={hide}
