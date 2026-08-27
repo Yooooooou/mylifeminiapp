@@ -101,7 +101,7 @@ def test_income_for_a_new_week_appends_a_row(repo, fake):
     weeks = repo.list_cashflow()
     assert len(weeks) == 3
     added = weeks[-1]
-    assert added.period == "15.09.2025 – 21.09.2025"
+    assert added.period == "2025-09-15 – 2025-09-21"
     assert added.income_other == 25000
     assert added.income_nedelka == 0
 
@@ -125,14 +125,14 @@ def test_habits_upsert_edits_the_existing_day(repo, fake):
     entry = repo.get_habits_for(date(2025, 9, 7))
     assert entry.workout is True
     assert entry.mood == 5
-    assert entry.spending_ok is True  # untouched by the partial update
+    assert entry.meditation is True  # untouched by the partial update
 
 
 def test_habits_upsert_creates_a_missing_day(repo, fake):
     row = repo.upsert_habits(
         HabitUpsert(
             date=date(2025, 9, 9),
-            spending_ok=True,
+            meditation=True,
             workout=False,
             work_done=True,
             mood=3,
@@ -179,7 +179,7 @@ def test_streak_breaks_on_a_partially_filled_day(repo, fake):
     """A blank field breaks the streak; answering 'Нет' does not — it is filled."""
     today = date.today()
     fake.grids["Привычки"] = [
-        ["Дата", "Траты под контролем", "Тренировка", "Работа сделана", "Настроение"],
+        ["Дата", "медитация", "Тренировка", "Работа сделана", "Настроение"],
         [(today - timedelta(days=2)).strftime("%d.%m.%Y"), "Да", "Да", "Да", "4"],
         [(today - timedelta(days=1)).strftime("%d.%m.%Y"), "Да", "Да", "", "3"],
         [today.strftime("%d.%m.%Y"), "Да", "Нет", "Да", "5"],
@@ -191,7 +191,7 @@ def test_streak_survives_an_unfilled_today(repo, fake):
     """Before the evening check-in the streak reads through yesterday."""
     today = date.today()
     fake.grids["Привычки"] = [
-        ["Дата", "Траты под контролем", "Тренировка", "Работа сделана", "Настроение"],
+        ["Дата", "медитация", "Тренировка", "Работа сделана", "Настроение"],
         [(today - timedelta(days=2)).strftime("%d.%m.%Y"), "Да", "Да", "Да", "4"],
         [(today - timedelta(days=1)).strftime("%d.%m.%Y"), "Да", "Да", "Да", "3"],
         [today.strftime("%d.%m.%Y"), "Да", "", "", ""],

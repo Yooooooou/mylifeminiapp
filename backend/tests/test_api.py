@@ -81,7 +81,7 @@ def test_habits_today_and_upsert(client, auth):
 
     client.post(
         "/api/habits",
-        json={"spending_ok": True, "workout": False, "work_done": True, "mood": 4},
+        json={"meditation": True, "workout": False, "work_done": True, "mood": 4},
         headers=auth,
     )
     updated = client.get("/api/habits/today", headers=auth).json()

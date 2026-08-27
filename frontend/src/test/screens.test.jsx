@@ -142,7 +142,7 @@ describe('Habits check-in', () => {
     api.habitsToday.mockResolvedValue({
       id: 7,
       date: '2025-09-09',
-      spending_ok: true,
+      meditation: true,
       workout: false,
       work_done: true,
       mood: 4,

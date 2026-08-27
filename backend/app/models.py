@@ -97,21 +97,21 @@ class BodyEntry(BaseModel):
     id: int
     date: Date | None = None
     weight: float | None = None
-    workouts: str | None = None
+    workouts: int | None = None
     note: str | None = None
 
 
 class BodyCreate(BaseModel):
     weight: float = Field(ge=40, le=200, description="Kilograms")
     note: str | None = Field(default=None, max_length=300)
-    workouts: str | None = Field(default=None, max_length=60)
+    workouts: int | None = Field(default=None, ge=0, le=21)
     date: Date | None = None
 
 
 class BodyUpdate(BaseModel):
     weight: float | None = Field(default=None, ge=40, le=200)
     note: str | None = Field(default=None, max_length=300)
-    workouts: str | None = Field(default=None, max_length=60)
+    workouts: int | None = Field(default=None, ge=0, le=21)
     date: Date | None = None
 
 
@@ -149,7 +149,7 @@ class JobUpdate(BaseModel):
 class HabitEntry(BaseModel):
     id: int | None = None
     date: Date
-    spending_ok: bool | None = None
+    meditation: bool | None = None
     workout: bool | None = None
     work_done: bool | None = None
     mood: int | None = Field(default=None, ge=1, le=5)
@@ -157,7 +157,7 @@ class HabitEntry(BaseModel):
     @property
     def complete(self) -> bool:
         return (
-            self.spending_ok is not None
+            self.meditation is not None
             and self.workout is not None
             and self.work_done is not None
             and self.mood is not None
@@ -166,7 +166,7 @@ class HabitEntry(BaseModel):
 
 class HabitUpsert(BaseModel):
     date: Date | None = None
-    spending_ok: bool | None = None
+    meditation: bool | None = None
     workout: bool | None = None
     work_done: bool | None = None
     mood: int | None = Field(default=None, ge=1, le=5)

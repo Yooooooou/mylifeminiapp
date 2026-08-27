@@ -60,7 +60,7 @@ CASHFLOW_HEADERS = [
 BODY_HEADERS = ["Дата", "Вес", "Тренировки", "Заметка"]
 JOB_HEADERS = ["Компания", "Роль", "Дата отклика", "Статус", "Заметка"]
 HABIT_HEADERS = [
-    "Дата", "Траты под контролем", "Тренировка", "Работа сделана", "Настроение",
+    "Дата", "медитация", "Тренировка", "Работа сделана", "Настроение",
 ]
 
 
@@ -401,26 +401,37 @@ class Repository:
                     id=row_number,
                     date=when,
                     weight=weight,
-                    workouts=table.value(row, "Тренировки") or None,
+                    workouts=_as_int(parse_number(table.value(row, "Тренировки"))),
                     note=table.value(row, "Заметка") or None,
                 )
             )
         return entries
 
     def create_body(self, payload: BodyCreate) -> int:
+        """Record a weight, reusing the row already dated for that day.
+
+        The Тело tab is pre-dated weekly into the future, so appending would
+        bury today's entry below a year of empty rows and leave its own row
+        blank. Same reasoning as the habits check-in: one row per date.
+        """
+        when = payload.date or date.today()
         snap = self.snapshot()
         table = snap.body
-        values = self._row_for(
-            table,
-            {
-                "Дата": format_date(payload.date or date.today()),
-                "Вес": payload.weight,
-                "Тренировки": payload.workouts,
-                "Заметка": payload.note,
-            },
-        )
+
+        fields = {
+            "Дата": format_date(when),
+            "Вес": payload.weight,
+            "Тренировки": payload.workouts,
+            "Заметка": payload.note,
+        }
+
+        existing_row = self._row_with_date(table, when)
+        if existing_row is not None:
+            self._write_fields(table, existing_row, fields)
+            return existing_row
+
         row = table.next_row
-        self.sheets.insert_row(table.title, row, values)
+        self.sheets.insert_row(table.title, row, self._row_for(table, fields))
         return row
 
     def update_body(self, entry_id: int, payload: BodyUpdate) -> None:
@@ -518,7 +529,7 @@ class Repository:
                 HabitEntry(
                     id=row_number,
                     date=when,
-                    spending_ok=parse_bool(table.value(row, "Траты под контролем")),
+                    meditation=parse_bool(table.value(row, "медитация")),
                     workout=parse_bool(table.value(row, "Тренировка")),
                     work_done=parse_bool(table.value(row, "Работа сделана")),
                     mood=int(mood) if mood is not None and 1 <= mood <= 5 else None,
@@ -538,15 +549,11 @@ class Repository:
         snap = self.snapshot()
         table = snap.habits
 
-        existing_row: int | None = None
-        for row_number, row in table.rows:
-            if parse_date(table.value(row, "Дата")) == when:
-                existing_row = row_number
-                break
+        existing_row = self._row_with_date(table, when)
 
         fields = {
             "Дата": format_date(when),
-            "Траты под контролем": _bool_cell(payload.spending_ok),
+            "медитация": _bool_cell(payload.meditation),
             "Тренировка": _bool_cell(payload.workout),
             "Работа сделана": _bool_cell(payload.work_done),
             "Настроение": payload.mood,
@@ -635,7 +642,7 @@ class Repository:
             for entry in self.list_habits(snap):
                 marks = "".join(
                     "✅" if flag else "⬜"
-                    for flag in (entry.spending_ok, entry.workout, entry.work_done)
+                    for flag in (entry.meditation, entry.workout, entry.work_done)
                 )
                 items.append(
                     HistoryItem(
@@ -700,6 +707,13 @@ class Repository:
 
     # -------------------------------------------------------------- helpers
 
+    def _row_with_date(self, table: Table, when: date) -> int | None:
+        """Row already carrying this date, if the tab was pre-dated for it."""
+        for row_number, row in table.rows:
+            if parse_date(table.value(row, "Дата")) == when:
+                return row_number
+        return None
+
     def _row_for(self, table: Table, fields: dict[str, object]) -> list[object]:
         """Build a full row for insertion, respecting the sheet's column order."""
         row: list[object] = [""] * table.width
@@ -733,6 +747,10 @@ class Repository:
             if row_number == record_id:
                 return row
         raise _not_found(what)
+
+
+def _as_int(value: float | None) -> int | None:
+    return None if value is None else int(value)
 
 
 def _bool_cell(value: bool | None) -> str | None:

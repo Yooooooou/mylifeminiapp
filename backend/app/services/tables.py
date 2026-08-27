@@ -133,7 +133,10 @@ def parse_date(value: str, *, default_year: int | None = None) -> date | None:
 
 
 def format_date(value: date) -> str:
-    return value.strftime("%d.%m.%Y")
+    # ISO, matching the dates already sitting in the Тело and Привычки tabs.
+    # A dd.mm.yyyy row among them would sort and compare differently in the
+    # sheet's own formulas.
+    return value.strftime("%Y-%m-%d")
 
 
 _TRUE = {"да", "yes", "true", "1", "+", "v", "✓", "✔", "x", "истина", "готово"}
@@ -154,7 +157,9 @@ def parse_bool(value: str) -> bool | None:
 
 
 def format_bool(value: bool) -> str:
-    return "Да" if value else "Нет"
+    # The habit columns are headed "(1/0)" and the sheet's own formulas sum
+    # them, so a written "Да" would both look foreign and break those totals.
+    return "1" if value else "0"
 
 
 # ------------------------------------------------------------------- tables

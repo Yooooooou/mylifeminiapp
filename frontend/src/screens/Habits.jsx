@@ -22,7 +22,7 @@ export function Habits() {
   useEffect(() => {
     if (!data) return;
     setForm({
-      spending_ok: data.spending_ok,
+      meditation: data.meditation,
       workout: data.workout,
       work_done: data.work_done,
       mood: data.mood,
@@ -61,9 +61,9 @@ export function Habits() {
     >
       <Card className="divide-y divide-border">
         <Toggle
-          label="Траты под контролем"
-          value={form.spending_ok}
-          onChange={set('spending_ok')}
+          label="Медитация"
+          value={form.meditation}
+          onChange={set('meditation')}
         />
         <Toggle label="Тренировка" value={form.workout} onChange={set('workout')} />
         <Toggle label="Работа сделана" value={form.work_done} onChange={set('work_done')} />
