@@ -13,7 +13,7 @@ from datetime import date
 
 from aiogram import Bot, Dispatcher, F
 from aiogram.client.default import DefaultBotProperties
-from aiogram.exceptions import TelegramBadRequest
+from aiogram.exceptions import TelegramBadRequest, TelegramNetworkError
 from aiogram.filters import Command, CommandStart
 from aiogram.types import (
     InlineKeyboardButton,
@@ -48,6 +48,27 @@ def _inline_webapp(text: str = "Открыть трекер", path: str = "") ->
     )
 
 
+async def _set_menu_button() -> None:
+    """Install the menu button, treating any failure as unimportant.
+
+    It is a convenience — /start offers the same WebApp button inline — but it
+    is also the first call the bot makes, before polling has started retrying
+    anything. Catching only TelegramBadRequest meant a reset connection to
+    api.telegram.org at that moment raised TelegramNetworkError, killed the bot
+    task, and took the API down with it. Nothing here is worth an outage.
+    """
+    try:
+        await bot.set_chat_menu_button(
+            menu_button=MenuButtonWebApp(
+                text="Трекер", web_app=WebAppInfo(url=settings.webapp_url)
+            )
+        )
+    except (TelegramBadRequest, TelegramNetworkError) as exc:
+        logger.warning("Menu button not set: %s", exc)
+    except Exception:  # noqa: BLE001 — startup must survive anything here
+        logger.warning("Menu button not set", exc_info=True)
+
+
 async def _drop_stale_keyboard(message: Message) -> None:
     """Take down the persistent reply keyboard earlier versions installed.
 
@@ -63,8 +84,8 @@ async def _drop_stale_keyboard(message: Message) -> None:
     try:
         notice = await message.answer("…", reply_markup=ReplyKeyboardRemove())
         await notice.delete()
-    except TelegramBadRequest as exc:
-        logger.warning("Could not clear the old reply keyboard: %s", exc)
+    except Exception:  # noqa: BLE001 — /start must answer even if this fails
+        logger.warning("Could not clear the old reply keyboard", exc_info=True)
 
 
 def _is_owner(message: Message) -> bool:
@@ -132,17 +153,7 @@ async def main() -> None:
         format="%(asctime)s %(levelname)s %(name)s %(message)s",
     )
 
-    # The menu button is a convenience: /start still offers the same WebApp
-    # button inline. Losing it is not worth taking the API down with the bot,
-    # so log the reason and carry on.
-    try:
-        await bot.set_chat_menu_button(
-            menu_button=MenuButtonWebApp(
-                text="Трекер", web_app=WebAppInfo(url=settings.webapp_url)
-            )
-        )
-    except TelegramBadRequest as exc:
-        logger.error("Could not set the menu button: %s", exc)
+    await _set_menu_button()
 
     scheduler: AsyncIOScheduler | None = None
     if settings.reminder_enabled:
