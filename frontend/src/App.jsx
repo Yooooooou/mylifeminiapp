@@ -15,13 +15,21 @@ import { JobForm } from './screens/Jobs';
 import { Debts } from './screens/Debts';
 import { History } from './screens/History';
 
-// The four sections carry the tab bar; forms and detail pages open over them
-// and rely on Telegram's own Back button instead.
-const SECTIONS = ['/', '/money', '/career', '/progress'];
+/**
+ * Forms and detail pages open over a section and use Telegram's Back button, so
+ * they hide the tab bar. Everything else shows it — stated as "not an overlay"
+ * rather than a list of section paths, so an unrecognised route still lands on
+ * a screen with navigation instead of a dead end.
+ */
+const OVERLAYS = ['/income', '/weight', '/habits', '/history'];
 
 function Chrome() {
   const { pathname } = useLocation();
-  return SECTIONS.includes(pathname) ? <TabBar /> : null;
+  const overlay =
+    OVERLAYS.includes(pathname) ||
+    pathname.startsWith('/jobs/') ||
+    pathname.startsWith('/debts/');
+  return overlay ? null : <TabBar />;
 }
 
 function ScrollToTop() {

@@ -198,13 +198,23 @@ export function Input(props) {
   );
 }
 
-export function Select({ children, ...props }) {
+export function Select({ options, children, ...props }) {
   return (
     <select
       {...props}
-      className="min-h-[48px] w-full appearance-none rounded-xl2 bg-surface px-4 text-card text-text outline-none focus:ring-2 focus:ring-accent"
+      className="min-h-[48px] w-full rounded-xl2 bg-surface px-4 text-card text-text outline-none focus:ring-2 focus:ring-accent"
     >
-      {children}
+      {options
+        ? options.map((option) => {
+            const { value, label } =
+              typeof option === 'string' ? { value: option, label: option } : option;
+            return (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            );
+          })
+        : children}
     </select>
   );
 }
@@ -214,14 +224,17 @@ export function Select({ children, ...props }) {
  * be unanswered — and a switch has no way to show that: "off" and "not asked
  * yet" would look identical, which is exactly the ambiguity to avoid.
  */
-export function Toggle({ label, value, onChange }) {
+export function Toggle({ label, hint, value, onChange }) {
   const options = [
     { text: 'Да', answer: true },
     { text: 'Нет', answer: false },
   ];
   return (
     <div className="flex items-center justify-between gap-3 px-4 py-3">
-      <span className="text-card text-text">{label}</span>
+      <span className="min-w-0">
+        <span className="block text-card text-text">{label}</span>
+        {hint ? <span className="mt-0.5 block text-micro text-hint">{hint}</span> : null}
+      </span>
       <div className="flex shrink-0 gap-1 rounded-full bg-elevated p-1">
         {options.map((option) => {
           const active = value === option.answer;

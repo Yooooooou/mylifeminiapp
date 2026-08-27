@@ -8,6 +8,7 @@ import { ToastProvider } from '../components/Toast';
 import { Today } from '../screens/Today';
 import { Habits } from '../screens/Habits';
 import { Weight } from '../screens/Weight';
+import { Income } from '../screens/Income';
 
 vi.mock('../lib/api', () => ({
   api: {
@@ -15,6 +16,7 @@ vi.mock('../lib/api', () => ({
     habitsToday: vi.fn(),
     saveHabits: vi.fn(),
     addWeight: vi.fn(),
+    addIncome: vi.fn(),
   },
   ApiError: class extends Error {},
 }));
@@ -226,5 +228,29 @@ describe('Habits check-in', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
 
     expect(await screen.findByRole('status')).toHaveTextContent('Чек-ин сохранён');
+  });
+});
+
+describe('Income form', () => {
+  it('offers the income sources to choose from', async () => {
+    // The select was fed an `options` array while rendering only `children`,
+    // so the source list came up empty and nothing could be picked.
+    renderAt('/income', <Income />);
+
+    const select = screen.getByRole('combobox');
+    expect(within(select).getByRole('option', { name: 'Nedelka' })).toBeInTheDocument();
+    expect(within(select).getByRole('option', { name: 'Прочее' })).toBeInTheDocument();
+  });
+
+  it('sends the source that was picked', async () => {
+    api.addIncome.mockResolvedValue({ ok: true, id: 19 });
+    renderAt('/income', <Income />);
+
+    await userEvent.type(screen.getByPlaceholderText('0'), '180000');
+    await userEvent.selectOptions(screen.getByRole('combobox'), 'Прочее');
+    await userEvent.click(screen.getByRole('button', { name: 'Сохранить' }));
+
+    await waitFor(() => expect(api.addIncome).toHaveBeenCalled());
+    expect(api.addIncome.mock.calls[0][0].source).toBe('Прочее');
   });
 });

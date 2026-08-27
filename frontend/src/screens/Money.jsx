@@ -45,7 +45,7 @@ function MoneyBody({ data, navigate }) {
     (acc, debt) => ({
       remaining: acc.remaining + (debt.remaining ?? 0),
       initial: acc.initial + (debt.total ?? 0),
-      minimum: acc.minimum + (debt.minimum ?? 0),
+      minimum: acc.minimum + (debt.min_payment ?? 0),
     }),
     { remaining: 0, initial: 0, minimum: 0 },
   );
@@ -74,6 +74,54 @@ function MoneyBody({ data, navigate }) {
             title="За эту неделю ещё нет записей"
             body="Добавь доход — строка недели создастся сама."
           />
+        )}
+      </Section>
+
+      <Section
+        title="Доходы"
+        action={
+          <button
+            type="button"
+            onClick={() => navigate('/income')}
+            className="text-secondary font-medium text-link"
+          >
+            + Добавить
+          </button>
+        }
+      >
+        {/* Income is stored per week, not per payment: the Кэшфлоу block has a
+            column per source and one row per period. So the honest view is the
+            week list, showing where a recorded income actually landed. */}
+        {data.weeks.length === 0 ? (
+          <Empty
+            title="Здесь появятся твои доходы"
+            body="Добавь первый — он ляжет в неделю по своей дате."
+          />
+        ) : (
+          <Stack>
+            {[...data.weeks]
+              .filter((week) => week.income_nedelka + week.income_other > 0)
+              .slice(-6)
+              .reverse()
+              .map((week) => (
+                <Card key={week.id}>
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="text-body text-hint">{week.period}</span>
+                    <span className="text-card font-semibold tabular-nums text-text">
+                      {money(week.income_nedelka + week.income_other)}
+                    </span>
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-x-4 text-secondary text-hint">
+                    {week.income_nedelka > 0 ? (
+                      <span>Nedelka {money(week.income_nedelka)}</span>
+                    ) : null}
+                    {week.income_other > 0 ? (
+                      <span>Прочее {money(week.income_other)}</span>
+                    ) : null}
+                  </div>
+                </Card>
+              ))}
+          </Stack>
         )}
       </Section>
 
@@ -146,9 +194,9 @@ function DebtRow({ debt, onOpen }) {
 
       <Progress value={repaid} max={initial} tone="success" />
 
-      {debt.minimum || debt.rate ? (
+      {debt.min_payment || debt.rate ? (
         <p className="mt-3 flex flex-wrap gap-x-4 text-secondary text-hint">
-          {debt.minimum ? <span>Мин. платёж {money(debt.minimum)}</span> : null}
+          {debt.min_payment ? <span>Мин. платёж {money(debt.min_payment)}</span> : null}
           {debt.rate ? <span>Ставка {percent(debt.rate)}</span> : null}
         </p>
       ) : null}

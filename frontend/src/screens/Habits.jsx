@@ -62,11 +62,22 @@ export function Habits() {
       <Card className="divide-y divide-border">
         <Toggle
           label="Медитация"
+          hint="Сегодня медитировал"
           value={form.meditation}
           onChange={set('meditation')}
         />
-        <Toggle label="Тренировка" value={form.workout} onChange={set('workout')} />
-        <Toggle label="Работа сделана" value={form.work_done} onChange={set('work_done')} />
+        <Toggle
+          label="Тренировка"
+          hint="Была тренировка"
+          value={form.workout}
+          onChange={set('workout')}
+        />
+        <Toggle
+          label="Работа сделана"
+          hint="Сделал то, что планировал на сегодня по работе"
+          value={form.work_done}
+          onChange={set('work_done')}
+        />
         <Scale label="Настроение" value={form.mood} onChange={set('mood')} />
       </Card>
 
