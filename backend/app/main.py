@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -61,9 +62,43 @@ async def _unhandled(_: Request, exc: Exception) -> JSONResponse:
     )
 
 
+def _bundle_id() -> str:
+    """Name of the JS bundle index.html currently points at.
+
+    A Mini App webview can hold a cached shell for a long time, and every
+    version of a bug then looks identical from the outside. Opening /health in
+    a browser answers "which build is actually live" without a deploy log.
+    """
+    index = os.path.join(os.path.abspath(settings.static_dir), "index.html")
+    try:
+        with open(index, encoding="utf-8") as handle:
+            match = re.search(r"assets/(index-[A-Za-z0-9_-]+\.js)", handle.read())
+    except OSError:
+        return "no-frontend"
+    return match.group(1) if match else "unknown"
+
+
 @app.get("/health")
 def health() -> dict:
-    return {"ok": True}
+    return {"ok": True, "bundle": _bundle_id()}
+
+
+@app.middleware("http")
+async def cache_headers(request: Request, call_next):
+    """Let hashed assets cache forever, and never let the shell go stale.
+
+    Vite fingerprints every asset filename, so those are safe to keep. The
+    shell is what points at them, and without a directive of its own a webview
+    is free to reuse the old one — which pins the app to a bundle that a
+    deploy has already replaced.
+    """
+    response = await call_next(request)
+    path = request.url.path
+    if path.startswith("/assets/"):
+        response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+    elif not path.startswith("/api/"):
+        response.headers["Cache-Control"] = "no-cache, must-revalidate"
+    return response
 
 
 app.include_router(api_router)

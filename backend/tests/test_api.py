@@ -23,7 +23,20 @@ def auth() -> dict:
 
 
 def test_health_needs_no_auth(client):
-    assert client.get("/health").json() == {"ok": True}
+    payload = client.get("/health").json()
+    assert payload["ok"] is True
+    # Names the live bundle, so a cached Mini App shell can be spotted from
+    # outside without reading a deploy log.
+    assert "bundle" in payload
+
+
+def test_the_shell_is_never_cached_but_hashed_assets_are(client):
+    # A stale shell keeps pointing at a bundle the deploy already replaced,
+    # which makes every version of a bug look identical from the outside.
+    assert "no-cache" in client.get("/health").headers["cache-control"]
+
+    api = client.get("/api/dashboard")
+    assert "cache-control" not in api.headers
 
 
 def test_api_rejects_an_unauthenticated_request(client):
