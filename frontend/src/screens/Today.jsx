@@ -7,6 +7,7 @@
 import { useNavigate } from 'react-router-dom';
 
 import { ActivityFeed } from '../components/ActivityFeed';
+import { HomeScreenPrompt } from '../components/HomeScreenPrompt';
 import { Screen } from '../components/Screen';
 import {
   Card,
@@ -55,6 +56,7 @@ function TodayBody({ data, navigate }) {
   return (
     <>
       <CheckinTask done={done} streak={streak} onOpen={() => navigate('/habits')} />
+      <HomeScreenPrompt />
 
       <Section title="Деньги">
         <Stack>

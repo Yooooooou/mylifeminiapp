@@ -228,3 +228,54 @@ export function bindBackButton(onBack) {
     tg.BackButton.hide();
   };
 }
+
+
+/* ------------------------------------------------------------ home screen */
+
+/**
+ * Telegram can install a Mini App as a home-screen icon (Bot API 8.0), which
+ * launches it through Telegram and therefore still arrives signed — unlike a
+ * browser bookmark, which would open the page with no initData at all.
+ *
+ * Support is decided by the client, not by us: the methods are absent on older
+ * versions, and a client that cannot do it answers "unsupported". So the offer
+ * is only ever shown when the client says it is possible and not already done.
+ */
+export function homeScreenSupported() {
+  return typeof tg?.addToHomeScreen === 'function';
+}
+
+/** Resolves to 'added' | 'missing' | 'unsupported' | 'unknown'. */
+export function homeScreenStatus() {
+  return new Promise((resolve) => {
+    if (typeof tg?.checkHomeScreenStatus !== 'function') {
+      resolve(homeScreenSupported() ? 'unknown' : 'unsupported');
+      return;
+    }
+    try {
+      // A client that never answers must not leave the caller hanging.
+      const timer = setTimeout(() => resolve('unknown'), 3000);
+      tg.checkHomeScreenStatus((status) => {
+        clearTimeout(timer);
+        resolve(status ?? 'unknown');
+      });
+    } catch {
+      resolve('unsupported');
+    }
+  });
+}
+
+export function addToHomeScreen() {
+  try {
+    tg?.addToHomeScreen?.();
+  } catch {
+    /* the client declines by doing nothing */
+  }
+}
+
+/** Fires once the icon really exists; returns an unsubscribe. */
+export function onHomeScreenAdded(handler) {
+  if (typeof tg?.onEvent !== 'function') return () => {};
+  tg.onEvent('homeScreenAdded', handler);
+  return () => tg.offEvent?.('homeScreenAdded', handler);
+}
