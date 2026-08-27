@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Overwritten at runtime from Telegram's themeParams; these keep the app
+       readable in a plain browser and during the first paint. */
+    --tg-bg: #ffffff;
+    --tg-surface: #f4f4f5;
+    --tg-text: #0f0f10;
+    --tg-hint: #8b8b90;
+    --tg-link: #2a80d6;
+    --tg-accent: #2a80d6;
+    --tg-accent-text: #ffffff;
+    --tg-border: #e4e4e7;
+    --tg-danger: #e0483c;
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-bg text-text antialiased;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    /* Telegram's WebView reports its usable height here on newer clients. */
+    min-height: var(--tg-viewport-stable-height, 100vh);
+    overscroll-behavior-y: none;
+  }
+
+  /* Numeric inputs: no spinners, digits align in the metric cards. */
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number']::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}

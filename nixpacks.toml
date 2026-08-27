@@ -1,0 +1,17 @@
+# Railway build: compile the Mini App bundle, then run the API + bot together.
+
+[phases.setup]
+nixPkgs = ["python311", "nodejs_20"]
+
+[phases.install]
+cmds = [
+  "python -m venv /opt/venv",
+  "/opt/venv/bin/pip install --no-cache-dir -r backend/requirements.txt",
+  "npm --prefix frontend ci",
+]
+
+[phases.build]
+cmds = ["npm --prefix frontend run build"]
+
+[start]
+cmd = "cd backend && /opt/venv/bin/python run.py"
