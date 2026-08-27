@@ -29,5 +29,8 @@ COPY backend/ backend/
 # bundle has to keep its frontend/dist place next to backend/.
 COPY --from=frontend /build/dist frontend/dist
 
-WORKDIR /app/backend
-CMD ["python", "run.py"]
+# Stay at the repo root and address the entrypoint by its full relative path.
+# The start command may also be set on the Railway service, and `python
+# backend/run.py` is what reads naturally there; keeping CMD identical means
+# both spellings resolve to the same file.
+CMD ["python", "backend/run.py"]
