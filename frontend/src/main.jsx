@@ -3,9 +3,11 @@ import { createRoot } from 'react-dom/client';
 
 import App from './App';
 import { normalizeHash } from './lib/route';
+// Imported for its side effect: the launch parameters are captured out of the
+// fragment before normalizeHash rewrites it. Order matters here.
+import './lib/telegram';
 import './index.css';
 
-// Must run before the router reads the fragment for the first time.
 normalizeHash();
 
 createRoot(document.getElementById('root')).render(
