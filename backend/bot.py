@@ -18,10 +18,8 @@ from aiogram.filters import Command, CommandStart
 from aiogram.types import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
-    KeyboardButton,
     Message,
     MenuButtonWebApp,
-    ReplyKeyboardMarkup,
     WebAppInfo,
 )
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -39,21 +37,9 @@ bot = Bot(
 dispatcher = Dispatcher()
 
 
-def _webapp_keyboard() -> ReplyKeyboardMarkup:
-    return ReplyKeyboardMarkup(
-        keyboard=[
-            [
-                KeyboardButton(
-                    text="📊 Открыть трекер",
-                    web_app=WebAppInfo(url=settings.webapp_url),
-                )
-            ]
-        ],
-        resize_keyboard=True,
-        is_persistent=True,
-    )
-
-
+# Every entry point is an inline button. A reply-keyboard button carrying a
+# web_app opens the Mini App on Telegram Desktop without signing initData, so
+# the app loads and then fails auth. Inline buttons sign it on every client.
 def _inline_webapp(text: str = "Открыть трекер", path: str = "") -> InlineKeyboardMarkup:
     url = settings.webapp_url.rstrip("/") + (f"/{path.lstrip('/')}" if path else "")
     return InlineKeyboardMarkup(
@@ -75,7 +61,7 @@ async def on_start(message: Message) -> None:
         "<b>Life Tracker</b>\n\n"
         "Финансы, тело, работа и привычки — в одном экране.\n"
         "Жми кнопку ниже, чтобы открыть трекер.",
-        reply_markup=_webapp_keyboard(),
+        reply_markup=_inline_webapp("📊 Открыть трекер"),
     )
 
 
@@ -95,7 +81,7 @@ async def on_any(message: Message) -> None:
         return
     await message.answer(
         "Всё происходит в трекере — открывай его кнопкой ниже.",
-        reply_markup=_webapp_keyboard(),
+        reply_markup=_inline_webapp("📊 Открыть трекер"),
     )
 
 
